@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-
 import Header from "./Header";
 import Table from "./Table";
 import Add from "./Add";
 import Edit from "./Edit";
-
-// import { employeesData } from '../../data';
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
 import { db } from "../../firebase/config";
 
 const Dashboard = ({ setIsAuthenticated }) => {
@@ -18,11 +15,11 @@ const Dashboard = ({ setIsAuthenticated }) => {
 
   const getEmployees = async () => {
     const querySnapshot = await getDocs(collection(db, "employees"));
-    const employees = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}))
-    querySnapshot.forEach((doc) => {
-      console.log(`${doc.id} => ${JSON.stringify(doc.data())}`);
-    });
-    setEmployees(employees)
+    const employees = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setEmployees(employees);
   };
 
   useEffect(() => {
@@ -47,8 +44,10 @@ const Dashboard = ({ setIsAuthenticated }) => {
     }).then((result) => {
       if (result.value) {
         const [employee] = employees.filter((employee) => employee.id === id);
-
-        // TODO delete document
+        deleteDoc(doc(db, "employees", id));
+        setEmployees((prevEmployees) =>
+          prevEmployees.filter((prev) => prev.id !== id)
+        );
 
         Swal.fire({
           icon: "success",
@@ -57,11 +56,6 @@ const Dashboard = ({ setIsAuthenticated }) => {
           showConfirmButton: false,
           timer: 1500,
         });
-
-        const employeesCopy = employees.filter(
-          (employee) => employee.id !== id
-        );
-        setEmployees(employeesCopy);
       }
     });
   };
@@ -86,6 +80,7 @@ const Dashboard = ({ setIsAuthenticated }) => {
           employees={employees}
           setEmployees={setEmployees}
           setIsAdding={setIsAdding}
+          getEmployees={getEmployees}
         />
       )}
       {isEditing && (
@@ -94,6 +89,7 @@ const Dashboard = ({ setIsAuthenticated }) => {
           selectedEmployee={selectedEmployee}
           setEmployees={setEmployees}
           setIsEditing={setIsEditing}
+          getEmployees={getEmployees}
         />
       )}
     </div>
