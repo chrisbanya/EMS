@@ -3,7 +3,13 @@ import Swal from "sweetalert2";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../../firebase/config";
 
-const Edit = ({ employees, selectedEmployee, setEmployees, setIsEditing, getEmployees}) => {
+const Edit = ({
+  employees,
+  selectedEmployee,
+  setEmployees,
+  setIsEditing,
+  getEmployees,
+}) => {
   const id = selectedEmployee.id;
 
   const [firstName, setFirstName] = useState(selectedEmployee.firstName);
@@ -36,11 +42,15 @@ const Edit = ({ employees, selectedEmployee, setEmployees, setIsEditing, getEmpl
       await setDoc(doc(db, "employees", id), {
         ...employee,
       });
-    } catch (e) {
-      console.log(e.message);
+    } catch (error) {
+      Swal.fire({
+        title: "Error!",
+        text: error.message,
+        icon: "error",
+      });
     }
     setEmployees(employees);
-    getEmployees()
+    getEmployees();
     setIsEditing(false);
 
     Swal.fire({
