@@ -34,28 +34,50 @@ const Dashboard = ({ setIsAuthenticated }) => {
   };
 
   const handleDelete = (id) => {
+    let employee;
     Swal.fire({
-      icon: "warning",
       title: "Are you sure?",
       text: "You won't be able to revert this!",
+      icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, delete it!",
-      cancelButtonText: "No, cancel!",
+      customClass: {
+        confirmButton: "swal-confirm",
+        cancelButton: "swal-cancel",
+      },
+      showLoaderOnConfirm: true,
+      // based on swal docs preConfirm goes together with showLoaderOnConfirm hence this;
+      preConfirm: async () => {
+        try {
+          [employee] = employees.filter((employee) => employee.id === id);
+          await deleteDoc(doc(db, "employees", id));
+          setEmployees((prevEmployees) =>
+            prevEmployees.filter((prev) => prev.id !== id)
+          );
+        } catch (error) {
+          Swal.fire({
+            title: "Error!",
+            text: error.message,
+            icon: "error",
+          });
+        }
+      },
+      allowOutsideClick: () => !Swal.isLoading(),
     }).then((result) => {
-      if (result.value) {
-        const [employee] = employees.filter((employee) => employee.id === id);
-        deleteDoc(doc(db, "employees", id));
-        setEmployees((prevEmployees) =>
-          prevEmployees.filter((prev) => prev.id !== id)
-        );
-
-        Swal.fire({
-          icon: "success",
-          title: "Deleted!",
-          text: `${employee.firstName} ${employee.lastName}'s data has been deleted.`,
-          showConfirmButton: false,
-          timer: 1500,
-        });
+      if (result.isConfirmed) {
+        if (employee && employee.firstName && employee.lastName) {
+          Swal.fire({
+            title: "Deleted!",
+            text: `${employee.firstName} ${employee.lastName}'s data has been deleted.`,
+            icon: "success",
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: "Employee data is not available.",
+            icon: "error",
+          });
+        }
       }
     });
   };
